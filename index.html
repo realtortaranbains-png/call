@@ -12,34 +12,46 @@
   body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg); color: var(--ink);
          font: 17px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 16px; box-sizing: border-box; }
   a.call { display: block; margin: 18px auto 10px; padding: 18px 28px; border-radius: 14px; background: var(--accent); color: #fff;
-           font-size: 22px; font-weight: 700; text-decoration: none; }
-  p { color: var(--muted); margin: 6px 0; }
+           font-size: 22px; font-weight: 700; text-decoration: none; overflow-wrap: anywhere; }
+  p { color: var(--muted); margin: 6px 0; overflow-wrap: anywhere; }
 </style>
 </head>
 <body>
 <main>
   <p id="msg">Opening your phone…</p>
   <a class="call" id="call" href="#" hidden>Call</a>
-  <p id="hint" hidden>Tap the button to call from your cell.</p>
+  <p id="hint" hidden>Tap the button if nothing opened.</p>
 </main>
 <script>
-// B-Boss dialer. The number comes in the part of the link after "#",
+// B-Boss dialer. What to open comes in the part of the link after "#",
 // which browsers never send to the server, so GitHub never sees it.
+//   #+14035551234          call
+//   #sms:+14035551234      text (opens Messages)
+//   #mailto:name@email.com email (opens the mail app)
 (function () {
-  var raw = decodeURIComponent(location.hash.slice(1));
-  var num = raw.replace(/[^\d+]/g, "");
-  // Drop the number from the address bar and history once it has been read.
+  var raw = decodeURIComponent(location.hash.slice(1)).trim();
+  // Drop the number or email from the address bar and history once it has been read.
   try { history.replaceState(null, "", location.pathname); } catch (e) {}
   var msg = document.getElementById("msg"), btn = document.getElementById("call");
-  if (!/^\+?\d{7,15}$/.test(num)) { msg.textContent = "No phone number in this link."; return; }
-  var d = num.replace(/^\+?1(?=\d{10}$)/, "");
-  var shown = d.length === 10 ? "(" + d.slice(0, 3) + ") " + d.slice(3, 6) + "-" + d.slice(6) : num;
-  btn.href = "tel:" + num;
-  btn.textContent = "Call " + shown;
+  var kind = "tel", target = raw, m = /^(sms|mailto):(.*)$/i.exec(raw);
+  if (m) { kind = m[1].toLowerCase(); target = m[2]; }
+  var url, label, shown;
+  if (kind === "mailto") {
+    if (!/^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(target)) { msg.textContent = "No email address in this link."; return; }
+    shown = target; url = "mailto:" + target; label = "Email " + target;
+  } else {
+    var num = target.replace(/[^\d+]/g, "");
+    if (!/^\+?\d{7,15}$/.test(num)) { msg.textContent = "No phone number in this link."; return; }
+    var d = num.replace(/^\+?1(?=\d{10}$)/, "");
+    shown = d.length === 10 ? "(" + d.slice(0, 3) + ") " + d.slice(3, 6) + "-" + d.slice(6) : num;
+    url = kind + ":" + num; label = (kind === "sms" ? "Text " : "Call ") + shown;
+  }
+  btn.href = url;
+  btn.textContent = label;
   btn.hidden = false;
   document.getElementById("hint").hidden = false;
   msg.textContent = shown;
-  location.href = "tel:" + num;
+  location.href = url;
 })();
 </script>
 </body>
