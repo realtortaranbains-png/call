@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Call</title>
+<style>
+  :root { color-scheme: light dark; --bg: #f2f4f7; --ink: #141c27; --muted: #5b6676; --accent: #1e6fd9; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0d1219; --ink: #e5eaf1; --muted: #98a4b4; --accent: #6aa8f0; } }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg); color: var(--ink);
+         font: 17px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 16px; box-sizing: border-box; }
+  a.call { display: block; margin: 18px auto 10px; padding: 18px 28px; border-radius: 14px; background: var(--accent); color: #fff;
+           font-size: 22px; font-weight: 700; text-decoration: none; }
+  p { color: var(--muted); margin: 6px 0; }
+</style>
+</head>
+<body>
+<main>
+  <p id="msg">Opening your phone…</p>
+  <a class="call" id="call" href="#" hidden>Call</a>
+  <p id="hint" hidden>Tap the button to call from your cell.</p>
+</main>
+<script>
+// B-Boss dialer. The number comes in the part of the link after "#",
+// which browsers never send to the server, so GitHub never sees it.
+(function () {
+  var raw = decodeURIComponent(location.hash.slice(1));
+  var num = raw.replace(/[^\d+]/g, "");
+  // Drop the number from the address bar and history once it has been read.
+  try { history.replaceState(null, "", location.pathname); } catch (e) {}
+  var msg = document.getElementById("msg"), btn = document.getElementById("call");
+  if (!/^\+?\d{7,15}$/.test(num)) { msg.textContent = "No phone number in this link."; return; }
+  var d = num.replace(/^\+?1(?=\d{10}$)/, "");
+  var shown = d.length === 10 ? "(" + d.slice(0, 3) + ") " + d.slice(3, 6) + "-" + d.slice(6) : num;
+  btn.href = "tel:" + num;
+  btn.textContent = "Call " + shown;
+  btn.hidden = false;
+  document.getElementById("hint").hidden = false;
+  msg.textContent = shown;
+  location.href = "tel:" + num;
+})();
+</script>
+</body>
+</html>
